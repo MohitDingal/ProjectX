@@ -20,6 +20,8 @@ export interface DecalInstance extends DecalTransform {
   src: string
   /** Human-readable label, shown in the layers list. */
   name: string
+  /** Where on the shirt the decal is projected. */
+  placementArea?: 'chest' | 'back' | 'left-shoulder' | 'right-shoulder'
 }
 
 export type LibrarySource = 'preset' | 'upload'

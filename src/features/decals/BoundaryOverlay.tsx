@@ -5,20 +5,18 @@ import { useStore, useSelectedDecal } from '@/store/useStore'
 import { useThemePalette } from '@/features/theme/useThemeSync'
 import { rgbToHex } from '@/utils/color'
 import {
-  AREA_CENTER,
-  AREA_HALF,
+  AREAS,
   DECAL_BASE_SIZE,
 } from '@/utils/constants'
-import { uvToLocalPosition } from '@/utils/geometry'
 
-/** Closed-loop corner points for a square centered at (cx, cy) on plane z. */
-function squareLoop(cx: number, cy: number, z: number, half: number): Vector3Tuple[] {
+/** Closed-loop local square corner points on a local Z-offset plane. */
+function localSquareLoop(half: number, offsetZ: number): Vector3Tuple[] {
   return [
-    [cx - half, cy - half, z],
-    [cx + half, cy - half, z],
-    [cx + half, cy + half, z],
-    [cx - half, cy + half, z],
-    [cx - half, cy - half, z],
+    [-half, -half, offsetZ],
+    [half, -half, offsetZ],
+    [half, half, offsetZ],
+    [-half, half, offsetZ],
+    [-half, -half, offsetZ],
   ]
 }
 
@@ -28,58 +26,59 @@ function paletteToHex(channels: string): string {
 }
 
 /**
- * Editing aids drawn in the scene:
- *  - the fixed customization square (shown while editing, hidden on export)
- *  - a highlight around the currently selected decal
- *
- * Both use `depthTest={false}` so they read clearly over the shirt, and both
- * disappear from exported images because the export toggles `showBoundary` off
- * and clears the selection first.
+ * Boundary lines drawn around the active editing boundary or around the selected decal,
+ * mapped to their respective placement areas (chest, back, shoulders).
  */
 export function BoundaryOverlay() {
   const show = useStore((s) => s.showBoundary)
   const selected = useSelectedDecal()
+  const activeArea = useStore((s) => s.activeArea ?? 'chest')
   const palette = useThemePalette()
 
   const accentHex = useMemo(() => paletteToHex(palette.accentLight), [palette.accentLight])
 
-  const boundaryPoints = useMemo(
-    () => squareLoop(AREA_CENTER[0], AREA_CENTER[1], AREA_CENTER[2] + 0.004, AREA_HALF),
-    [],
-  )
+  const def = AREAS[activeArea]
+  const boundaryPoints = useMemo(() => localSquareLoop(def.halfSize, 0.004), [def.halfSize])
 
+  const selectedArea = selected?.placementArea ?? 'chest'
+  const selectedDef = AREAS[selectedArea]
   const selectionPoints = useMemo(() => {
     if (!selected) return null
-    const [x, y] = uvToLocalPosition(selected.u, selected.v)
     const half = (DECAL_BASE_SIZE * selected.scale) / 2
-    return squareLoop(x, y, AREA_CENTER[2] + 0.006, half)
+    return localSquareLoop(half, 0.006)
   }, [selected])
 
   return (
     <group>
       {show && (
-        <Line
-          points={boundaryPoints}
-          color={accentHex}
-          lineWidth={1.6}
-          dashed
-          dashScale={60}
-          transparent
-          opacity={0.65}
-          depthTest={false}
-          renderOrder={20}
-        />
+        <group position={def.center} rotation={def.rotation}>
+          <Line
+            points={boundaryPoints}
+            color={accentHex}
+            lineWidth={1.6}
+            dashed
+            dashScale={60}
+            transparent
+            opacity={0.65}
+            depthTest={false}
+            renderOrder={20}
+          />
+        </group>
       )}
-      {show && selectionPoints && (
-        <Line
-          points={selectionPoints}
-          color={accentHex}
-          lineWidth={2.4}
-          transparent
-          opacity={0.95}
-          depthTest={false}
-          renderOrder={21}
-        />
+      {show && selectionPoints && selected && (
+        <group position={selectedDef.center} rotation={selectedDef.rotation}>
+          <group position={[selected.u * selectedDef.halfSize, selected.v * selectedDef.halfSize, 0]}>
+            <Line
+              points={selectionPoints}
+              color={accentHex}
+              lineWidth={2.4}
+              transparent
+              opacity={0.95}
+              depthTest={false}
+              renderOrder={21}
+            />
+          </group>
+        </group>
       )}
     </group>
   )

@@ -51,7 +51,12 @@ export function DecalControls() {
       aria-label={`Editing ${decal.name}`}
     >
       <div className="mb-3 flex items-center justify-between gap-3">
-        <p className="truncate text-sm font-semibold text-white">{decal.name}</p>
+        <div>
+          <p className="truncate text-sm font-semibold text-white">{decal.name}</p>
+          <span className="text-[10px] font-black uppercase text-accent tracking-wider">
+            Area: {decal.placementArea ?? 'chest'}
+          </span>
+        </div>
         <div className="flex items-center gap-1.5">
           <Button
             size="sm"

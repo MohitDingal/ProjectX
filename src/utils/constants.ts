@@ -47,13 +47,48 @@ export const PRESET_COLORS: readonly string[] = [
 ]
 
 /** Camera framing for the customizer (front-facing, locked). */
-export const CAMERA_POSITION: [number, number, number] = [0, 0.05, 0.95]
+export const CAMERA_POSITION: [number, number, number] = [0, 0.05, 1.12]
 export const CAMERA_FOV = 28
 
-/** Azimuth (left/right) limit in radians — small enough to never see the back. */
-export const CAMERA_AZIMUTH_LIMIT = 0.4 // ≈ 23°
-/** Polar (up/down) limits in radians, around the horizon. */
-export const CAMERA_POLAR_MIN = Math.PI / 2 - 0.35
-export const CAMERA_POLAR_MAX = Math.PI / 2 + 0.18
+/** Allow full 360 rotation to access back and shoulders. */
+export const CAMERA_AZIMUTH_LIMIT = Math.PI
+export const CAMERA_POLAR_MIN = Math.PI / 2 - 0.55
+export const CAMERA_POLAR_MAX = Math.PI / 2 + 0.35
 export const CAMERA_MIN_DISTANCE = 0.7
-export const CAMERA_MAX_DISTANCE = 1.25
+export const CAMERA_MAX_DISTANCE = 1.6
+
+export type PlacementArea = 'chest' | 'back' | 'left-shoulder' | 'right-shoulder'
+
+export interface AreaDefinition {
+  center: [number, number, number]
+  normal: [number, number, number]
+  rotation: [number, number, number]
+  halfSize: number
+}
+
+export const AREAS: Record<PlacementArea, AreaDefinition> = {
+  chest: {
+    center: [0, 0.04, 0.13],
+    normal: [0, 0, 1],
+    rotation: [0, 0, 0],
+    halfSize: 0.13,
+  },
+  back: {
+    center: [0, 0.04, -0.13],
+    normal: [0, 0, -1],
+    rotation: [0, Math.PI, 0],
+    halfSize: 0.13,
+  },
+  'left-shoulder': {
+    center: [-0.17, 0.15, 0],
+    normal: [-1, 0, 0],
+    rotation: [0, -Math.PI / 2, 0],
+    halfSize: 0.08,
+  },
+  'right-shoulder': {
+    center: [0.17, 0.15, 0],
+    normal: [1, 0, 0],
+    rotation: [0, Math.PI / 2, 0],
+    halfSize: 0.08,
+  },
+}
