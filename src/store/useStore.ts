@@ -28,6 +28,7 @@ export interface StoreState {
   library: LibraryItem[]
 
   // --- UI ---
+  activeArea: 'chest' | 'back' | 'left-shoulder' | 'right-shoulder'
   activeTool: ToolId
   showBoundary: boolean
   isDraggingDecal: boolean
@@ -51,6 +52,7 @@ export interface StoreState {
   addLibraryItem: (item: Omit<LibraryItem, 'id' | 'source'>) => LibraryItem
 
   // --- UI actions ---
+  setActiveArea: (area: 'chest' | 'back' | 'left-shoulder' | 'right-shoulder') => void
   setActiveTool: (tool: ToolId) => void
   setShowBoundary: (show: boolean) => void
   setDraggingDecal: (dragging: boolean) => void
@@ -75,6 +77,7 @@ export const useStore = create<StoreState>((set, get) => ({
   library: [...PRESET_DECALS],
 
   // --- UI ---
+  activeArea: 'chest',
   activeTool: 'move',
   showBoundary: true,
   isDraggingDecal: false,
@@ -94,6 +97,7 @@ export const useStore = create<StoreState>((set, get) => ({
       v: 0,
       rotation: 0,
       scale: 1,
+      placementArea: get().activeArea,
     }
     set((s) => ({ decals: [...s.decals, decal], selectedDecalId: id, activeTool: 'move' }))
     return id
@@ -157,6 +161,7 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   // --- UI actions ---
+  setActiveArea: (area) => set({ activeArea: area }),
   setActiveTool: (tool) => set({ activeTool: tool }),
   setShowBoundary: (show) => set({ showBoundary: show }),
   setDraggingDecal: (dragging) => set({ isDraggingDecal: dragging }),
@@ -168,6 +173,7 @@ export const useStore = create<StoreState>((set, get) => ({
       metalness: 0.05,
       decals: [],
       selectedDecalId: null,
+      activeArea: 'chest',
       activeTool: 'move',
       showBoundary: true,
       isDraggingDecal: false,

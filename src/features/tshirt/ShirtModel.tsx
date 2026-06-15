@@ -1,7 +1,7 @@
 import { useMemo, useRef, type ReactNode } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
-import { Color, Mesh, MeshStandardMaterial, type Object3D } from 'three'
+import { Color, Mesh, MeshStandardMaterial, type Object3D, Group } from 'three'
 import { useStore } from '@/store/useStore'
 import { SHIRT_MODEL_URL } from '@/utils/constants'
 
@@ -14,9 +14,11 @@ interface GLTFResult {
  * Loads the baked T-shirt GLB and renders it with a material whose color we
  * animate toward the store's selected color (smooth transitions). Any children
  * (decals, boundary overlay) are projected onto this mesh.
+ * Includes a subtle breathing and floating animation.
  */
 export function ShirtModel({ children }: { children?: ReactNode }) {
   const { nodes, materials } = useGLTF(SHIRT_MODEL_URL) as unknown as GLTFResult
+  const groupRef = useRef<Group>(null)
 
   // Resolve the shirt mesh by its known name, with a defensive fallback.
   const meshNode = useMemo<Mesh>(() => {
@@ -39,7 +41,7 @@ export function ShirtModel({ children }: { children?: ReactNode }) {
 
   const tmpColor = useRef(new Color())
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     const { color, roughness, metalness } = useStore.getState()
     tmpColor.current.set(color)
     // Frame-rate independent exponential smoothing.
@@ -47,10 +49,18 @@ export function ShirtModel({ children }: { children?: ReactNode }) {
     material.color.lerp(tmpColor.current, t)
     material.roughness = roughness
     material.metalness = metalness
+
+    // Gentle breathing scale oscillation and soft y floating animation
+    if (groupRef.current) {
+      const time = state.clock.getElapsedTime()
+      const breathe = 1 + Math.sin(time * 1.2) * 0.008
+      groupRef.current.scale.set(breathe, breathe, breathe)
+      groupRef.current.position.y = Math.sin(time * 0.8) * 0.006
+    }
   })
 
   return (
-    <group dispose={null}>
+    <group ref={groupRef} dispose={null}>
       <mesh geometry={meshNode.geometry} material={material} castShadow receiveShadow>
         {children}
       </mesh>
